@@ -37,6 +37,42 @@ test("Promise 콜백 후속 처리 메서드 `then` 테스트", (done) => {
   });
 });
 
+test("비동기 함수 내부에서 `resolve`/`reject` 호출 처리 테스트", (done) => {
+  /**
+   * @Given
+   */
+  const timer = 1000;
+
+  const myPromiseResults: unknown[] = [];
+  const myPromise1 = new MyPromise((resolve) => {
+    setTimeout(() => resolve("TIMER SUCCESS!"), timer);
+  });
+  const myPromise2 = new MyPromise((_resolve, reject) => {
+    setTimeout(() => reject("TIMER ERROR!"), timer);
+  });
+
+  /**
+   * @When
+   */
+  myPromise1.then((res) => {
+    myPromiseResults.push(res);
+  });
+  myPromise2.then(
+    () => {},
+    (res) => {
+      myPromiseResults.push(res);
+    },
+  );
+
+  /**
+   * @Then
+   */
+  setTimeout(() => {
+    expect(myPromiseResults).toEqual(["TIMER SUCCESS!", "TIMER ERROR!"]);
+    done();
+  }, timer + 1);
+});
+
 test("Promise 우선 순위 비교", (done) => {
   /**
    * @Given 출력 값을 저장할 배열생성

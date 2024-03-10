@@ -3,5 +3,8 @@
   "editor.codeActionsOnSave": {
     "source.fixAll": "always"
   },
-  "editor.formatOnSave": false
+  "editor.formatOnSave": false,
+  "[typescript]": {
+    "editor.defaultFormatter": "vscode.typescript-language-features"
+  }
 }

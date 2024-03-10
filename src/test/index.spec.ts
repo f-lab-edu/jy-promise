@@ -2,7 +2,7 @@
 import { expect, test } from "@jest/globals";
 import MyPromise from "../index";
 
-test("Promise 콜백 후속 처리 메서드 `then` 테스트", (done) => {
+test("`Promise` 콜백 후속 처리 메서드 `then` 테스트", (done) => {
   /**
    * @Given MyPromise 인스턴스 생성 및 결괏값 저장 변수 선언
    */
@@ -71,6 +71,38 @@ test("비동기 함수 내부에서 `resolve`/`reject` 호출 처리 테스트",
     expect(myPromiseResults).toEqual(["TIMER SUCCESS!", "TIMER ERROR!"]);
     done();
   }, timer + 1);
+});
+
+test("`Promise` 체이닝 테스트", (done) => {
+  /**
+   * @Given
+   */
+  const myPromiseResults: unknown[] = [];
+  const myPromise = new MyPromise<number>((resolve) => {
+    resolve(1);
+  });
+
+  /**
+   * @When
+   */
+  myPromise
+    .then((res) => {
+      myPromiseResults.push(res);
+      return res;
+    })
+    .then((res) => {
+      myPromiseResults.push(res + 1);
+      return new MyPromise((resolve) => resolve(3));
+    })
+    .then((res) => myPromiseResults.push(res));
+
+  /**
+   * @Then
+   */
+  setTimeout(() => {
+    expect(myPromiseResults).toEqual([1, 2, 3]);
+    done();
+  });
 });
 
 test("Promise 우선 순위 비교", (done) => {

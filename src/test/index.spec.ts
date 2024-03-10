@@ -2,7 +2,7 @@
 import { expect, test } from "@jest/globals";
 import MyPromise from "../index";
 
-test("`Promise` 콜백 후속 처리 메서드 `then` 테스트", (done) => {
+test("`Promise` 비동기 후속 처리 메서드 `then` 테스트", (done) => {
   /**
    * @Given MyPromise 인스턴스 생성 및 결괏값 저장 변수 선언
    */
@@ -14,6 +14,7 @@ test("`Promise` 콜백 후속 처리 메서드 `then` 테스트", (done) => {
   const myPromise2 = new MyPromise((_resolve, reject) => {
     reject("ERROR!");
   });
+  const myPromise3 = new MyPromise((resolve) => resolve("SUCCESS!!"));
 
   /**
    * @When
@@ -27,12 +28,43 @@ test("`Promise` 콜백 후속 처리 메서드 `then` 테스트", (done) => {
       myPromiseResults.push(err);
     },
   );
+  myPromise3.then().then((res) => myPromiseResults.push(res));
 
   /**
    * @Then
    */
   setTimeout(() => {
-    expect(myPromiseResults).toEqual(["SUCCESS!", "ERROR!"]);
+    expect(myPromiseResults).toEqual(["SUCCESS!", "ERROR!", "SUCCESS!!"]);
+    done();
+  });
+});
+
+test("`Promise` 비동기 후속 처리 메서드 `catch` 테스트", (done) => {
+  /**
+   * @Given
+   */
+  const myPromiseResults: unknown[] = [];
+  const myPromise1 = new MyPromise((_resolve, reject) => {
+    reject("ERROR1");
+  });
+  const myPromise2 = new MyPromise((_resolve, reject) => reject("ERROR2"));
+
+  /**
+   * @When
+   */
+  myPromise1
+    .then((res) => res)
+    .catch((error) => {
+      myPromiseResults.push(error);
+    });
+
+  myPromise2.catch().catch((error) => myPromiseResults.push(error));
+
+  /**
+   * @Then
+   */
+  setTimeout(() => {
+    expect(myPromiseResults).toEqual(["ERROR1", "ERROR2"]);
     done();
   });
 });
@@ -54,9 +86,15 @@ test("비동기 함수 내부에서 `resolve`/`reject` 호출 처리 테스트",
   /**
    * @When
    */
-  myPromise1.then((res) => {
-    myPromiseResults.push(res);
-  });
+  myPromise1
+    .then((res) => {
+      myPromiseResults.push(res);
+    })
+    .then(() => {
+      return new MyPromise((resolve) => setTimeout(() => resolve("TIMER SUCCESS2")));
+    })
+    .then((res) => myPromiseResults.push(res));
+
   myPromise2.then(
     () => {},
     (res) => {
@@ -68,9 +106,9 @@ test("비동기 함수 내부에서 `resolve`/`reject` 호출 처리 테스트",
    * @Then
    */
   setTimeout(() => {
-    expect(myPromiseResults).toEqual(["TIMER SUCCESS!", "TIMER ERROR!"]);
+    expect(myPromiseResults).toEqual(["TIMER SUCCESS!", "TIMER ERROR!", "TIMER SUCCESS2"]);
     done();
-  }, timer + 1);
+  }, timer + 100);
 });
 
 test("`Promise` 체이닝 테스트", (done) => {
